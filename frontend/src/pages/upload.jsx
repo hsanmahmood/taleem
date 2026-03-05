@@ -1,68 +1,117 @@
-import { useState } from 'react'
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Loader2 } from "lucide-react";
+import { createCourse, uploadFile } from "../services/api";
+import GlassCard from "../components/GlassCard";
+import ErrorCard from "../components/ErrorCard";
+import LandingStep from "../components/LandingStep";
+import UploadStep from "../components/UploadStep";
+import CodeStep from "../components/CodeStep";
+
+const MAX_MB = 150;
 
 export default function Upload() {
-    const [file, setFile] = useState(null)
-    const [courseId, setCourseId] = useState('')
-    const [status, setStatus] = useState('idle')
+  const { courseId } = useParams();
+  const { t } = useTranslation();
+  const [step, setStep] = useState("loading");
+  const [courseName, setCourseName] = useState("");
+  const [sessionCode, setSessionCode] = useState("");
+  const [files, setFiles] = useState([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [uploadingIndex, setUploadingIndex] = useState(null);
 
-    function handleFileChange(e) {
-        setFile(e.target.files[0])
+  useEffect(() => {
+    if (!courseId) {
+      setStep("invalid");
+      return;
     }
 
-    async function handleUpload() {
-        if (!file || !courseId) return setStatus('error')
+    createCourse(courseId, courseId)
+      .then((data) => {
+        setCourseName(data.course_name);
+        setSessionCode(data.session_code);
+        setStep("landing");
+      })
+      .catch((err) => {
+        console.error(err);
+        setStep("invalid");
+      });
+  }, [courseId]);
 
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('course_id', courseId)
+  async function handleUpload() {
+    setError("");
 
+    if (!files.length) {
+      setError(t("upload.error_no_files"));
+      return;
+    }
+
+    const oversized = files.filter((f) => f.size > MAX_MB * 1024 * 1024);
+    if (oversized.length) {
+      setError(t("upload.error_oversized", {
+        max: MAX_MB,
+        files: oversized.map((f) => f.name).join(", "),
+      }));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        setUploadingIndex(i);
         try {
-            setStatus('uploading')
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/upload`, {
-                method: 'POST',
-                body: formData
-            })
-
-            if (!res.ok) throw new Error()
-            setStatus('success')
-        } catch {
-            setStatus('error')
+          await uploadFile(files[i], courseId);
+        } catch (err) {
+          console.error(err);
+          setError(t("upload.error_file_failed", { file: files[i].name }));
+          setUploadingIndex(null);
+          setLoading(false);
+          return;
         }
+      }
+      setUploadingIndex(null);
+      setStep("code");
+    } catch (err) {
+      console.error(err);
+      setError(t("upload.error_upload_failed"));
+    } finally {
+      setLoading(false);
     }
+  }
 
+  if (step === "invalid") {
+    return <ErrorCard message={t("upload.invalid_url")} />;
+  }
+
+  if (step === "loading") {
     return (
-        <div className="min-h-screen p-6 font-tajawal">
-            <h1 className="text-2xl font-bold mb-6">رفع ملف</h1>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-brand-secondary" />
+      </div>
+    );
+  }
 
-            {status === 'success' && <p className="text-green-600 mb-4">تم رفع الملف بنجاح!</p>}
-            {status === 'error' && <p className="text-red-500 mb-4">حدث خطأ، حاول مرة أخرى.</p>}
-
-            <input
-                type="text"
-                placeholder="أدخل معرف المادة"
-                value={courseId}
-                onChange={e => setCourseId(e.target.value)}
-                className="w-full border rounded p-3 mb-4 font-tajawal"
-            />
-
-            <input
-                type="file"
-                accept=".pdf"
-                onChange={handleFileChange}
-                className="w-full mb-2"
-            />
-
-            <p className="text-sm text-gray-500 mb-6">
-                {file ? file.name : 'لم يتم اختيار ملف'}
-            </p>
-
-            <button
-                onClick={handleUpload}
-                disabled={status === 'uploading'}
-                className="w-full bg-blue-600 text-white rounded p-3 font-bold font-tajawal"
-            >
-                {status === 'uploading' ? 'جارٍ الرفع...' : 'رفع'}
-            </button>
-        </div>
-    )
-}   
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <GlassCard className="w-full max-w-md">
+        {step === "landing" && (
+          <LandingStep courseName={courseName} onStart={() => setStep("upload")} />
+        )}
+        {step === "upload" && (
+          <UploadStep
+            courseName={courseName}
+            files={files}
+            setFiles={setFiles}
+            error={error}
+            loading={loading}
+            onSubmit={handleUpload}
+            uploadingIndex={uploadingIndex}
+          />
+        )}
+        {step === "code" && <CodeStep courseName={courseName} sessionCode={sessionCode} />}
+      </GlassCard>
+    </div>
+  );
+}

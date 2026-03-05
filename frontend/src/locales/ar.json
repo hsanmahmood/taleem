@@ -1,0 +1,40 @@
+{
+  "app": { "title": "نظام نقل وتخزين ملفات المادة" },
+  "upload": {
+    "subject_label": "المادة",
+    "description": "ارفع ملفات المادة وانقلها للعرض على شاشة الصف",
+    "steps": {
+      "1": "اضغط على \"بدء\" لفتح الصفحة المخصصة لرفع الملفات",
+      "2": "ارفع ملفات المادة التي تريد نقلها لشاشة الصف",
+      "3": "ستحصل على رمز مكون من 3 أرقام، أدخله في شاشة الصف عبر الرابط المخصص لتحميل الملفات"
+    },
+    "start_button": "بدء",
+    "next_button": "التالي",
+    "file_hint": "اختر ملفاً أو أكثر للرفع (PDF، Word، PowerPoint — بحد أقصى {{max}}MB لكل ملف)",
+    "file_label": "الملفات",
+    "success_title": "تم رفع الملفات بنجاح!",
+    "code_label": "رمز الاقتران",
+    "code_instructions": "افتح الرابط التالي على شاشة الصف وأدخل الرمز:",
+    "error_no_files": "الرجاء اختيار ملف واحد على الأقل",
+    "error_oversized": "الحد الأقصى لحجم الملف {{max}}MB: {{files}}",
+    "error_upload_failed": "حدث خطأ أثناء رفع الملف: {{files}}",
+    "error_file_type": "نوع الملف غير مدعوم",
+    "error_file_failed": "حدث خطأ أثناء رفع الملف: {{file}}",
+    "invalid_url": "رابط غير صالح"
+  },
+  "view": {
+    "code_label": "رمز الملفات (3 أرقام فقط)",
+    "code_placeholder": "000",
+    "enter_button": "دخول",
+    "list_title": "قائمة الملفات",
+    "file_type_label": "النوع",
+    "file_name_label": "اسم الملف",
+    "present_button": "عرض",
+    "download_button": "تنزيل",
+    "back_button": "رجوع",
+    "error_invalid_code": "رمز غير صحيح",
+    "error_fetch_failed": "حدث خطأ عند تحميل الملفات، حاول مجدداً",
+    "error_open_failed": "حدث خطأ عند فتح الملف",
+    "error_download_failed": "حدث خطأ عند تنزيل الملف"
+  }
+}
