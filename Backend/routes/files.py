@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, Response
 from services.supabase import supabase
 from config import SUPABASE_BUCKET
+import mimetypes
 
 files_bp= Blueprint('files', __name__)
 
@@ -38,4 +39,56 @@ def get_file(file_id):
 
     except Exception as e:
         print(f"Get file error: {e}")
-        return jsonify({"error": "Something broken"}), 500       
+        return jsonify({"error": "Something broken"}), 500
+
+
+@files_bp.route('/file/<file_id>/view', methods=['GET'])
+def view_file(file_id):
+    try:
+        file= supabase.table('files').select('*').eq('file_id', file_id).execute()
+
+        if not file.data:
+            return jsonify({"error": "File not found"}), 404
+
+        file_data= file.data[0]
+        file_path= f"{file_data['course_id']}/{file_data['file_id']}/{file_data['file_name']}"
+
+        file_bytes= supabase.storage.from_(SUPABASE_BUCKET).download(file_path)
+
+        content_type= mimetypes.guess_type(file_data['file_name'])[0] or 'application/octet-stream'
+
+        return Response(
+            file_bytes,
+            mimetype=content_type,
+            headers={"Content-Disposition": f"inline; filename=\"{file_data['file_name']}\""}
+        )
+
+    except Exception as e:
+        print(f"View file error: {e}")
+        return jsonify({"error": "Something broken"}), 500
+
+
+@files_bp.route('/file/<file_id>/download', methods=['GET'])
+def download_file(file_id):
+    try:
+        file= supabase.table('files').select('*').eq('file_id', file_id).execute()
+
+        if not file.data:
+            return jsonify({"error": "File not found"}), 404
+
+        file_data= file.data[0]
+        file_path= f"{file_data['course_id']}/{file_data['file_id']}/{file_data['file_name']}"
+
+        file_bytes= supabase.storage.from_(SUPABASE_BUCKET).download(file_path)
+
+        content_type= mimetypes.guess_type(file_data['file_name'])[0] or 'application/octet-stream'
+
+        return Response(
+            file_bytes,
+            mimetype=content_type,
+            headers={"Content-Disposition": f"attachment; filename=\"{file_data['file_name']}\""}
+        )
+
+    except Exception as e:
+        print(f"Download file error: {e}")
+        return jsonify({"error": "Something broken"}), 500

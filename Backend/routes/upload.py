@@ -17,10 +17,11 @@ def upload_file():
         if not course_id:
             return jsonify({"error": "No course_id provided"}), 400
 
+        course_uuid= str(uuid.uuid5(uuid.NAMESPACE_DNS, course_id))
         file_id= str(uuid.uuid4())
         filename= file.filename
         file_type= file.content_type
-        file_path= f"{course_id}/{file_id}/{filename}"
+        file_path= f"{course_uuid}/{file_id}/{filename}"
 
         supabase.storage.from_(SUPABASE_BUCKET).upload(file_path, file.read())
 
@@ -28,7 +29,7 @@ def upload_file():
             'file_id': file_id,
             'file_name': filename,
             'file_type': file_type,
-            'course_id': course_id,
+            'course_id': course_uuid,
         }).execute()
 
         return jsonify({"message": "File uploaded!"}), 201
