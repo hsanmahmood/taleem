@@ -6,7 +6,7 @@ import logo from "../assets/logo.png";
 const MAX_MB = 150;
 const ACCEPT = ".pdf,.ppt,.pptx,.doc,.docx";
 
-export default function UploadStep({ courseName, files, setFiles, error, loading, onSubmit, uploadingIndex }) {
+export default function UploadStep({ courseName, files, setFiles, error, loading, onSubmit, uploadedIndexes }) {
   const { t } = useTranslation();
   const inputRef = useRef(null);
 
@@ -65,15 +65,13 @@ export default function UploadStep({ courseName, files, setFiles, error, loading
                 {f.name.split(".").pop()}
               </span>
               <span className="text-xs truncate flex-1">{f.name}</span>
-              <span className="shrink-0">
-                {uploadingIndex === i ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-brand-secondary" />
-                ) : uploadingIndex !== null && i < uploadingIndex ? (
-                  <CheckCircle className="w-3 h-3 text-green-400" />
-                ) : (
-                  <span className="text-xs text-brand-secondary">{(f.size / 1024 / 1024).toFixed(1)}MB</span>
-                )}
-              </span>
+              {uploadedIndexes.has(i) ? (
+                <CheckCircle className="w-3 h-3 text-green-400 shrink-0" />
+              ) : loading && i === uploadedIndexes.size ? (
+                <Loader2 className="w-3 h-3 animate-spin text-brand-secondary shrink-0" />
+              ) : (
+                <span className="text-xs text-brand-secondary shrink-0">{(f.size / 1024 / 1024).toFixed(1)}MB</span>
+              )}
             </div>
           ))}
         </div>
@@ -88,14 +86,10 @@ export default function UploadStep({ courseName, files, setFiles, error, loading
 
       <button
         onClick={onSubmit}
-        disabled={loading}
+        disabled={loading || (files.length > 0 && uploadedIndexes.size !== files.length && !error)}
         className="w-full bg-white text-black font-bold py-3 text-sm rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          t("upload.next_button")
-        )}
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("upload.next_button")}
       </button>
     </div>
   );

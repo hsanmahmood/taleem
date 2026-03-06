@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, Response
 from services.supabase import supabase
 from config import SUPABASE_BUCKET
 import mimetypes
+import os
 
 files_bp= Blueprint('files', __name__)
 
@@ -31,11 +32,12 @@ def get_file(file_id):
             return jsonify({"error": "File not found"}), 404
 
         file_data= file.data[0]
-        file_path= f"{file_data['course_id']}/{file_data['file_id']}/{file_data['file_name']}"
+        ext= os.path.splitext(file_data['file_name'])[1].lower()
+        file_path= f"{file_data['course_id']}/{file_data['file_id']}/{file_data['file_id']}{ext}"
 
-        signed_url= supabase.storage.from_(SUPABASE_BUCKET).create_signed_url(file_path, 3600)
+        public_url= supabase.storage.from_(SUPABASE_BUCKET).get_public_url(file_path)
 
-        return jsonify({"url": signed_url['signedURL']}), 200
+        return jsonify({"url": public_url}), 200
 
     except Exception as e:
         print(f"Get file error: {e}")
@@ -51,7 +53,8 @@ def view_file(file_id):
             return jsonify({"error": "File not found"}), 404
 
         file_data= file.data[0]
-        file_path= f"{file_data['course_id']}/{file_data['file_id']}/{file_data['file_name']}"
+        ext= os.path.splitext(file_data['file_name'])[1].lower()
+        file_path= f"{file_data['course_id']}/{file_data['file_id']}/{file_data['file_id']}{ext}"
 
         file_bytes= supabase.storage.from_(SUPABASE_BUCKET).download(file_path)
 
@@ -77,7 +80,8 @@ def download_file(file_id):
             return jsonify({"error": "File not found"}), 404
 
         file_data= file.data[0]
-        file_path= f"{file_data['course_id']}/{file_data['file_id']}/{file_data['file_name']}"
+        ext= os.path.splitext(file_data['file_name'])[1].lower()
+        file_path= f"{file_data['course_id']}/{file_data['file_id']}/{file_data['file_id']}{ext}"
 
         file_bytes= supabase.storage.from_(SUPABASE_BUCKET).download(file_path)
 

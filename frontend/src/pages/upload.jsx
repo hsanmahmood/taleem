@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
-import { createCourse, uploadFile } from "../services/api";
+import { createCourse, uploadFile, fetchCourseName } from "../services/api";
 import GlassCard from "../components/GlassCard";
 import ErrorCard from "../components/ErrorCard";
 import LandingStep from "../components/LandingStep";
@@ -20,65 +20,60 @@ export default function Upload() {
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [uploadingIndex, setUploadingIndex] = useState(null);
+  const [uploadedIndexes, setUploadedIndexes] = useState(new Set());
 
   useEffect(() => {
-    if (!courseId) {
-      setStep("invalid");
-      return;
-    }
+    if (!courseId) { setStep('invalid'); return }
 
-    createCourse(courseId, courseId)
-      .then((data) => {
-        setCourseName(data.course_name);
-        setSessionCode(data.session_code);
-        setStep("landing");
+    fetchCourseName(courseId)
+      .then(name => createCourse(courseId, name))
+      .then(data => {
+        setCourseName(data.course_name)
+        setSessionCode(data.session_code)
+        setStep('landing')
       })
-      .catch((err) => {
-        console.error(err);
-        setStep("invalid");
-      });
+      .catch(err => {
+        console.error(err)
+        setStep('invalid')
+      })
   }, [courseId]);
 
-  async function handleUpload() {
-    setError("");
-
-    if (!files.length) {
-      setError(t("upload.error_no_files"));
-      return;
-    }
-
-    const oversized = files.filter((f) => f.size > MAX_MB * 1024 * 1024);
+  useEffect(() => {
+    if (files.length === 0) return
+    const oversized = files.filter(f => f.size > MAX_MB * 1024 * 1024)
     if (oversized.length) {
-      setError(t("upload.error_oversized", {
-        max: MAX_MB,
-        files: oversized.map((f) => f.name).join(", "),
-      }));
-      return;
+      setError(t('upload.error_oversized', { max: MAX_MB, files: oversized.map(f => f.name).join(', ') }))
+      return
     }
-
-    setLoading(true);
-    try {
+    setError('')
+    setLoading(true)
+    setUploadedIndexes(new Set())
+    let cancelled = false
+    async function run() {
       for (let i = 0; i < files.length; i++) {
-        setUploadingIndex(i);
+        if (cancelled) return
         try {
-          await uploadFile(files[i], courseId);
+          await uploadFile(files[i], courseId)
+          if (!cancelled) setUploadedIndexes(prev => new Set([...prev, i]))
         } catch (err) {
-          console.error(err);
-          setError(t("upload.error_file_failed", { file: files[i].name }));
-          setUploadingIndex(null);
-          setLoading(false);
-          return;
+          if (!cancelled) {
+            console.error(err)
+            setError(t('upload.error_file_failed', { file: files[i].name }))
+            setLoading(false)
+          }
+          return
         }
       }
-      setUploadingIndex(null);
-      setStep("code");
-    } catch (err) {
-      console.error(err);
-      setError(t("upload.error_upload_failed"));
-    } finally {
-      setLoading(false);
+      if (!cancelled) setLoading(false)
     }
+    run()
+    return () => { cancelled = true }
+  }, [files])
+
+  function handleUpload() {
+    if (files.length === 0) { setError(t('upload.error_no_files')); return }
+    if (uploadedIndexes.size !== files.length) return
+    setStep('code')
   }
 
   if (step === "invalid") {
@@ -107,7 +102,7 @@ export default function Upload() {
             error={error}
             loading={loading}
             onSubmit={handleUpload}
-            uploadingIndex={uploadingIndex}
+            uploadedIndexes={uploadedIndexes}
           />
         )}
         {step === "code" && <CodeStep courseName={courseName} sessionCode={sessionCode} />}

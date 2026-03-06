@@ -20,7 +20,8 @@
     "error_upload_failed": "حدث خطأ أثناء رفع الملف: {{files}}",
     "error_file_type": "نوع الملف غير مدعوم",
     "error_file_failed": "حدث خطأ أثناء رفع الملف: {{file}}",
-    "invalid_url": "رابط غير صالح"
+    "invalid_url": "رابط غير صالح",
+    "proceed_button": "المتابعة"
   },
   "view": {
     "code_label": "رمز الملفات (3 أرقام فقط)",

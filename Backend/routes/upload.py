@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from services.supabase import supabase
 from config import SUPABASE_BUCKET
 import uuid
+import os
 
 upload_bp= Blueprint('upload', __name__)
 
@@ -21,9 +22,15 @@ def upload_file():
         file_id= str(uuid.uuid4())
         filename= file.filename
         file_type= file.content_type
-        file_path= f"{course_uuid}/{file_id}/{filename}"
+        ext= os.path.splitext(filename)[1].lower()
+        safe_filename= f"{file_id}{ext}"
+        file_path= f"{course_uuid}/{file_id}/{safe_filename}"
 
-        supabase.storage.from_(SUPABASE_BUCKET).upload(file_path, file.read())
+        supabase.storage.from_(SUPABASE_BUCKET).upload(
+            file_path, 
+            file.read(),
+            {"content-type": file_type, "x-upsert": "true"}
+        )
 
         supabase.table('files').insert({
             'file_id': file_id,

@@ -33,3 +33,13 @@ export async function getFile(fileId) {
   if (!res.ok) throw new Error("Failed to fetch file");
   return res.json();
 }
+
+export async function fetchCourseName(courseId) {
+  try {
+    const res = await fetch(`${BASE_URL}/course/name/${courseId}`)
+    const data = await res.json()
+    return data.course_name || courseId
+  } catch {
+    return courseId
+  }
+}
