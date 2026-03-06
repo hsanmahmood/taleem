@@ -52,7 +52,6 @@ export default function View() {
       <FileOptionsStep
         file={selectedFile}
         onBack={() => setStep("list")}
-        error={error}
       />
     );
   }

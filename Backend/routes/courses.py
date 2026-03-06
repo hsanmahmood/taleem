@@ -56,3 +56,17 @@ def init_course():
     except Exception as e:
         print(f"Error creating course: {e}")
         return jsonify({"error": "Something is broken"}), 500
+
+
+@courses_bp.route('/course/name/<course_id>', methods=['GET'])
+def get_course_name(course_id):
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+        res = requests.get(f'https://mz.thisweb.org/Reg/{course_id}', timeout=5)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        first_td = soup.find('td')
+        name = first_td.get_text(strip=True) if first_td else course_id
+        return jsonify({'course_name': name if name else course_id})
+    except:
+        return jsonify({'course_name': course_id})

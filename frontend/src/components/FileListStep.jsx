@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowRight } from "lucide-react";
 
 function getExtension(filename) {
-  return filename.split(".").pop().toUpperCase();
+  return (filename || '').split(".").pop().toUpperCase();
 }
 
 export default function FileListStep({ files, onSelect, onBack }) {
@@ -22,6 +22,9 @@ export default function FileListStep({ files, onSelect, onBack }) {
       </div>
 
       <div className="overflow-hidden rounded-xl border border-white/10">
+        {files.length === 0 ? (
+          <p className="text-xs text-brand-secondary text-center py-8">{t("view.error_fetch_failed")}</p>
+        ) : (
         <table className="w-full">
           <thead>
             <tr className="bg-white/5">
@@ -45,13 +48,14 @@ export default function FileListStep({ files, onSelect, onBack }) {
                     {getExtension(file.file_name)}
                   </span>
                 </td>
-                <td className="px-3 py-2.5 text-xs truncate max-w-[180px]">
-                  {file.file_name}
+                <td className="px-3 py-2.5 max-w-[180px] overflow-hidden">
+                  <span className="text-xs truncate flex-1 text-left block" dir="ltr">{file.file_name || '—'}</span>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   );
